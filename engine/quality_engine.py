@@ -12,23 +12,24 @@ class QualityEngine:
         state_changed = bool(data.get("state_changed", False))
         phase = data.get("phase", "UNKNOWN")
         stroke_count = int(data.get("stroke_count", 0))
+        drive_speed = float(data.get("drive_speed", 0.0))
+        rom = float(data.get("rom", 0.0))
 
         score = 0
 
-        # 40 điểm: confidence
-        score += confidence * 40
+        score += confidence * 25
 
-        # 20 điểm: phase hợp lệ
         if phase in ("CATCH", "DRIVE", "FINISH", "RECOVERY"):
             score += 20
 
-        # 20 điểm: có đổi trạng thái
         if state_changed:
-            score += 20
+            score += 15
 
-        # 20 điểm: đã phát hiện stroke
         if stroke_count > 0:
-            score += 20
+            score += 10
+
+        score += min(drive_speed * 2, 15)
+        score += min(rom * 2, 15)
 
         score = int(self.clamp(score))
         self.history.append(score)
@@ -38,6 +39,8 @@ class QualityEngine:
         return {
             "quality": score,
             "rhythm": round(rhythm, 1),
+            "drive_speed": drive_speed,
+            "rom": rom,
             "confidence": confidence,
             "state_changed": state_changed,
             "phase_valid": phase in ("CATCH", "DRIVE", "FINISH", "RECOVERY"),
