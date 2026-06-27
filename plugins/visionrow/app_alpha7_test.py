@@ -8,6 +8,8 @@ from pathlib import Path
 sys.path.append(str(Path.home() / 'ProjectAtlas'))
 sys.path.append(str(Path.home() / 'ProjectAtlas' / 'atlas_core' / 'legacy_engine'))
 sys.path.append(str(Path.home() / 'VisionRow'))
+sys.path.append(str(Path.home() / 'ProjectAtlas' / 'atlas_core' / 'legacy_engine'))
+sys.path.append(str(Path.home() / 'VisionRow'))
 from atlas_core.motion_engine import MotionEngineV2
 from engine.stroke import StrokeDetector
 from engine.flywheel import VirtualFlywheel
