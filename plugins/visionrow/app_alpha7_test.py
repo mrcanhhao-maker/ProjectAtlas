@@ -95,7 +95,7 @@ while True:
     cv2.putText(frame, f"Body Angle: {angle_text}", (20, 105), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"Stroke old: {stroke.count}", (20, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"SPM old: {stroke.spm:.1f}", (20, 175), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
-    cv2.putText(frame, f"MotionV2: {motion_v2.state} | StrokeV2: {motion_v2.stroke_count} | SPM2: {motion_v2.spm:.1f}", (20, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
+    cv2.putText(frame, f"MotionV2: {motion_v2.state} | StrokeV2: {motion_v2.stroke_count} | SPM2: {motion_v2.spm:.1f}", (20, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)\n    cv2.putText(frame, f"VelV2: {motion_v2.velocity:.1f}", (20, 245), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
     cv2.putText(frame, f"Power: {flywheel.power:.0f} W", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"Distance: {flywheel.distance:.1f} m", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"Pace 500m: {flywheel.pace_text()}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
