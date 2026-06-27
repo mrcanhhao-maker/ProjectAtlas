@@ -14,6 +14,7 @@ sys.path.insert(0, ROOT)
 from engine.pose_engine import PoseEngine
 from engine.stroke_v3 import StrokeEngineV3
 from engine.quality_engine import QualityEngine
+from engine.motion_metrics import MotionMetrics
 
 
 def main():
@@ -26,8 +27,9 @@ def main():
     pose_engine = PoseEngine()
     stroke_engine = StrokeEngineV3()
     quality_engine = QualityEngine()
+    motion_metrics = MotionMetrics()
 
-    print("ProjectAtlas Alpha 10.2 AI Engine started")
+    print("ProjectAtlas Alpha 10.6 AI Engine started")
     print("Press Q to quit")
 
     prev_time = time.time()
@@ -50,37 +52,51 @@ def main():
             landmarks = result.pose_landmarks.landmark
 
         data = stroke_engine.update(landmarks)
+        metrics = motion_metrics.update(landmarks)
+
+        data["drive_speed"] = metrics["drive_speed"]
+        data["rom"] = metrics["rom"]
+
         confidence = data.get("confidence", 0.0)
         state_changed = data.get("state_changed", False)
         quality = quality_engine.update(data)
 
         frame = pose_engine.draw(frame, result)
 
-        cv2.putText(frame, "ProjectAtlas Alpha 10.2 AI", (20, 40),
+        cv2.putText(frame, "ProjectAtlas Alpha 10.6 AI", (20, 40),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        cv2.putText(frame, f"Phase: {data['phase']}", (20, 90),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+        cv2.putText(frame, f"Phase: {data['phase']}", (20, 85),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        cv2.putText(frame, f"Stroke: {data['stroke_count']}", (20, 135),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+        cv2.putText(frame, f"Stroke: {data['stroke_count']}", (20, 125),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        cv2.putText(frame, f"SPM: {data['spm']}", (20, 180),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+        cv2.putText(frame, f"SPM: {data['spm']}", (20, 165),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        cv2.putText(frame, f"FPS: {fps}", (20, 225),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+        cv2.putText(frame, f"FPS: {fps}", (20, 205),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-        cv2.putText(frame, f"Confidence: {confidence:.2f}", (20, 270),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        cv2.putText(frame, f"Confidence: {confidence:.2f}", (20, 245),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
-        cv2.putText(frame, f"Changed: {state_changed}", (20, 315),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2)
+        cv2.putText(frame, f"Changed: {state_changed}", (20, 285),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
 
-        cv2.putText(frame, f"Quality: {quality['quality']}%", (20, 360),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
+        cv2.putText(frame, f"Quality: {quality['quality']}%", (20, 325),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 255), 2)
 
-        cv2.imshow("ProjectAtlas Alpha 10.2 AI Test", frame)
+        cv2.putText(frame, f"Rhythm: {quality.get('rhythm', 0)}", (20, 365),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 255), 2)
+
+        cv2.putText(frame, f"Drive Speed: {metrics['drive_speed']}", (20, 405),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+
+        cv2.putText(frame, f"ROM: {metrics['rom']}", (20, 445),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
+
+        cv2.imshow("ProjectAtlas Alpha 10.6 AI Test", frame)
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
