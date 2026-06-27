@@ -1,36 +1,31 @@
 import time
 from collections import deque
 
+from engine.phase_detector import PhaseDetector
+from engine.fsm import StrokeFSM
+
 
 class StrokeEngineV4:
     def __init__(self):
-        self.phase = "READY"
-        self.last_phase = "READY"
+        self.detector = PhaseDetector()
+        self.fsm = StrokeFSM(confirm_frames=3)
 
         self.stroke_count = 0
-        self.last_stroke_time = time.time()
-        self.min_stroke_interval = 0.8
-
         self.stroke_times = deque(maxlen=5)
         self.spm = 0
 
+        self.last_stroke_time = time.time()
+        self.min_stroke_interval = 0.8
+
+        self.candidate_phase = "UNKNOWN"
+
     def update(self, features):
-        if not features.body_found or features.confidence < 0.35:
-            self.phase = "NO BODY"
-            return self.data(features)
-
-        diff = features.wrist_to_hip
-
-        if diff > 0.12:
-            self.phase = "CATCH"
-        elif diff < -0.08:
-            self.phase = "FINISH"
-        else:
-            self.phase = "DRIVE"
+        self.candidate_phase = self.detector.detect(features)
+        phase = self.fsm.update(self.candidate_phase)
 
         now = time.time()
 
-        if self.last_phase == "FINISH" and self.phase == "CATCH":
+        if self.fsm.completed_stroke:
             if now - self.last_stroke_time > self.min_stroke_interval:
                 self.stroke_count += 1
                 self.stroke_times.append(now)
@@ -43,14 +38,13 @@ class StrokeEngineV4:
 
                 self.last_stroke_time = now
 
-        self.last_phase = self.phase
+        return self.data(features, phase)
 
-        return self.data(features)
-
-    def data(self, features):
+    def data(self, features, phase):
         return {
-            "phase": self.phase,
-            "last_phase": self.last_phase,
+            "phase": phase,
+            "candidate_phase": self.candidate_phase,
+            "state_changed": self.fsm.state_changed,
             "stroke_count": self.stroke_count,
             "spm": self.spm,
             "body_found": features.body_found,
