@@ -1,28 +1,34 @@
 import time
 from collections import deque
 
-from engine.phase_detector import PhaseDetector
+from engine.phase_classifier import PhaseClassifier
 from engine.fsm import StrokeFSM
 
 
 class StrokeEngineV4:
     def __init__(self):
-        self.detector = PhaseDetector()
-        self.fsm = StrokeFSM(confirm_frames=3)
+        self.classifier = PhaseClassifier()
+        self.fsm = StrokeFSM(confirm_frames=2)
 
         self.stroke_count = 0
         self.stroke_times = deque(maxlen=5)
         self.spm = 0
-
         self.last_stroke_time = time.time()
         self.min_stroke_interval = 0.8
 
-        self.candidate_phase = "UNKNOWN"
+        self.current_phase = "UNKNOWN"
+        self.score = 0
 
     def update(self, features):
-        self.candidate_phase = self.detector.detect(features)
-        phase = self.fsm.update(self.candidate_phase)
+        if not features or not getattr(features, "body_found", False):
+            return self._data(features, "UNKNOWN", "UNKNOWN", False)
 
+        phase, score = self.classifier.classify(features)
+
+        self.current_phase = phase
+        self.score = score
+
+        state = self.fsm.update(phase)
         now = time.time()
 
         if self.fsm.completed_stroke:
@@ -38,20 +44,29 @@ class StrokeEngineV4:
 
                 self.last_stroke_time = now
 
-        return self.data(features, phase)
+        return self._data(features, state, phase, self.fsm.state_changed)
 
-    def data(self, features, phase):
+    def _data(self, features, state, phase, state_changed):
+        confidence = 0
+        body_found = False
+
+        if features:
+            confidence = getattr(features, "confidence", 0)
+            body_found = getattr(features, "body_found", False)
+
         return {
-            "phase": phase,
-            "candidate_phase": self.candidate_phase,
-            "state_changed": self.fsm.state_changed,
+            "phase": state,
+            "candidate_phase": phase,
+            "ai_phase": phase,
+            "state_changed": state_changed,
+            "distance": round(self.score, 2),
             "stroke_count": self.stroke_count,
             "spm": self.spm,
-            "body_found": features.body_found,
-            "confidence": round(features.confidence, 2),
-            "back_angle": int(features.back_angle),
-            "left_elbow_angle": int(features.left_elbow_angle),
-            "right_elbow_angle": int(features.right_elbow_angle),
-            "left_knee_angle": int(features.left_knee_angle),
-            "right_knee_angle": int(features.right_knee_angle),
+            "body_found": body_found,
+            "confidence": round(confidence, 2),
+            "back_angle": round(getattr(features, "back_angle", 0), 1) if features else 0,
+            "left_elbow_angle": round(getattr(features, "left_elbow_angle", 0), 1) if features else 0,
+            "right_elbow_angle": round(getattr(features, "right_elbow_angle", 0), 1) if features else 0,
+            "left_knee_angle": round(getattr(features, "left_knee_angle", 0), 1) if features else 0,
+            "right_knee_angle": round(getattr(features, "right_knee_angle", 0), 1) if features else 0,
         }

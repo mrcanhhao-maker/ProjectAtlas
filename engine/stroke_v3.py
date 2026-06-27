@@ -7,7 +7,8 @@ class StrokeEngineV3:
         self.phase = "READY"
         self.last_phase = "READY"
         self.last_stroke_time = time.time()
-        self.spm = 0
+self.spm = 0
+self.min_stroke_interval = 0.8
 
     def update(self, landmarks):
         if landmarks is None:
@@ -32,12 +33,17 @@ class StrokeEngineV3:
             self.phase = "DRIVE"
 
         if self.last_phase == "CATCH" and self.phase == "DRIVE":
-            self.stroke_count += 1
-            now = time.time()
-            delta = now - self.last_stroke_time
-            if delta > 0:
-                self.spm = int(60 / delta)
-            self.last_stroke_time = now
+    now = time.time()
+
+    if now - self.last_stroke_time > self.min_stroke_interval:
+        self.stroke_count += 1
+
+        delta = now - self.last_stroke_time
+
+        if delta > 0:
+            self.spm = int(60 / delta)
+
+        self.last_stroke_time = now
 
         self.last_phase = self.phase
         return self.data()
