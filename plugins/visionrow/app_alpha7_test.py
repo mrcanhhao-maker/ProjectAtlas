@@ -11,11 +11,11 @@ sys.path.append(str(Path.home() / 'VisionRow'))
 sys.path.append(str(Path.home() / 'ProjectAtlas' / 'atlas_core' / 'legacy_engine'))
 sys.path.append(str(Path.home() / 'VisionRow'))
 from atlas_core.motion_engine import MotionEngineV2
-from engine.stroke import StrokeDetector
-from engine.flywheel import VirtualFlywheel
-from engine.calibration import CalibrationEngine
-from engine.pose_utils import get_point, midpoint, angle_between_vertical
-from engine.recorder import SessionRecorder
+from atlas_core.legacy_engine.stroke import StrokeDetector
+from atlas_core.legacy_engine.flywheel import VirtualFlywheel
+from atlas_core.legacy_engine.calibration import CalibrationEngine
+from atlas_core.legacy_engine.pose_utils import get_point, midpoint, angle_between_vertical
+from atlas_core.legacy_engine.recorder import SessionRecorder
 
 mp_pose = mp.solutions.pose
 mp_draw = mp.solutions.drawing_utils
@@ -95,11 +95,12 @@ while True:
     cv2.putText(frame, f"Body Angle: {angle_text}", (20, 105), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"Stroke old: {stroke.count}", (20, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"SPM old: {stroke.spm:.1f}", (20, 175), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
-    cv2.putText(frame, f"MotionV2: {motion_v2.state} | StrokeV2: {motion_v2.stroke_count} | SPM2: {motion_v2.spm:.1f}", (20, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)\n    cv2.putText(frame, f"VelV2: {motion_v2.velocity:.1f}", (20, 245), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
-    cv2.putText(frame, f"Power: {flywheel.power:.0f} W", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
-    cv2.putText(frame, f"Distance: {flywheel.distance:.1f} m", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
-    cv2.putText(frame, f"Pace 500m: {flywheel.pace_text()}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
-    cv2.putText(frame, f"Calories: {flywheel.calories:.1f}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
+    cv2.putText(frame, f"MotionV2: {motion_v2.state} | StrokeV2: {motion_v2.stroke_count} | SPM2: {motion_v2.spm:.1f}", (20, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
+    cv2.putText(frame, f"VelV2: {motion_v2.velocity:.1f}", (20, 245), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
+    cv2.putText(frame, f"Power: {flywheel.power:.0f} W", (20, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
+    cv2.putText(frame, f"Distance: {flywheel.distance:.1f} m", (20, 315), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
+    cv2.putText(frame, f"Pace 500m: {flywheel.pace_text()}", (20, 350), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
+    cv2.putText(frame, f"Calories: {flywheel.calories:.1f}", (20, 385), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"Calibration: {calibration.status_text()}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, f"FPS: {fps:.1f}", (20, 420), cv2.FONT_HERSHEY_SIMPLEX, 0.68, (255,255,255), 2)
     cv2.putText(frame, "Q quit | R reset | C calibrate", (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.62, (255,255,255), 2)
