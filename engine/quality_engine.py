@@ -1,6 +1,8 @@
+from collections import deque
+
 class QualityEngine:
     def __init__(self):
-        self.score = 0
+        self.history = deque(maxlen=10)
 
     def clamp(self, value, low=0, high=100):
         return max(low, min(high, value))
@@ -17,10 +19,10 @@ class QualityEngine:
         score += confidence * 40
 
         # 20 điểm: phase hợp lệ
-        if phase in ["CATCH", "DRIVE", "FINISH", "RECOVERY"]:
+        if phase in ("CATCH", "DRIVE", "FINISH", "RECOVERY"):
             score += 20
 
-        # 20 điểm: có chuyển trạng thái
+        # 20 điểm: có đổi trạng thái
         if state_changed:
             score += 20
 
@@ -28,11 +30,15 @@ class QualityEngine:
         if stroke_count > 0:
             score += 20
 
-        self.score = int(self.clamp(score))
+        score = int(self.clamp(score))
+        self.history.append(score)
+
+        rhythm = sum(self.history) / len(self.history) if self.history else 0
 
         return {
-            "quality": self.score,
+            "quality": score,
+            "rhythm": round(rhythm, 1),
             "confidence": confidence,
-            "phase_valid": phase in ["CATCH", "DRIVE", "FINISH", "RECOVERY"],
             "state_changed": state_changed,
+            "phase_valid": phase in ("CATCH", "DRIVE", "FINISH", "RECOVERY"),
         }
