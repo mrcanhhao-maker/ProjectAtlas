@@ -206,3 +206,15 @@ def test_corebluetooth_peripheral_manager_adapter_maps_properties_and_permission
 
     assert properties == 30
     assert permissions == 3
+
+
+def test_corebluetooth_peripheral_manager_adapter_tracks_service_add_result():
+    adapter = object.__new__(CoreBluetoothPeripheralManagerAdapter)
+    adapter.added_service_count = 0
+    adapter.service_errors = []
+
+    adapter.added_service_count += 1
+    adapter.service_errors.append("boom")
+
+    assert adapter.added_service_count == 1
+    assert adapter.service_errors == ["boom"]

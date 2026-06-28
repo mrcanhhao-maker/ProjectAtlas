@@ -43,6 +43,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self._manager: Any | None = None
         self._delegate: Any | None = None
         self._state_name = "unknown"
+        self.added_service_count = 0
+        self.service_errors: list[str] = []
         self._start()
 
     @property
@@ -150,6 +152,12 @@ class CoreBluetoothPeripheralManagerAdapter:
         class PeripheralDelegate(NSObject):  # type: ignore[misc, valid-type]
             def peripheralManagerDidUpdateState_(self, peripheral_manager: Any) -> None:
                 adapter._state_name = adapter.read_manager_state_name(peripheral_manager)
+
+            def peripheralManager_didAddService_error_(self, peripheral_manager: Any, service: Any, error: Any) -> None:
+                if error is None:
+                    adapter.added_service_count += 1
+                    return
+                adapter.service_errors.append(str(error))
 
         self._delegate = PeripheralDelegate.alloc().init()
         self._manager = CBPeripheralManager.alloc().initWithDelegate_queue_options_(
