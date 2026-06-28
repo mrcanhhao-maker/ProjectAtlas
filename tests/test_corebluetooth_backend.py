@@ -218,3 +218,37 @@ def test_corebluetooth_peripheral_manager_adapter_tracks_service_add_result():
 
     assert adapter.added_service_count == 1
     assert adapter.service_errors == ["boom"]
+
+
+def test_corebluetooth_backend_start_advertising_forwards_to_peripheral_manager(monkeypatch):
+    monkeypatch.setattr(
+        CoreBluetoothBackend,
+        "check_availability",
+        staticmethod(lambda: CoreBluetoothAvailability(True, True)),
+    )
+
+    class CapturingPeripheralManager:
+        def __init__(self):
+            self.started = []
+            self.stopped = False
+
+        @property
+        def state_name(self):
+            return "powered_on"
+
+        def start_advertising(self, advertisement):
+            self.started.append(advertisement)
+
+        def stop_advertising(self):
+            self.stopped = True
+
+    peripheral = CapturingPeripheralManager()
+    backend = CoreBluetoothBackend(peripheral_manager_factory=lambda: peripheral)
+    advertisement = BleAdvertisement(local_name="ProjectAtlas", service_uuids=("service",))
+
+    backend.start_advertising(advertisement)
+    backend.stop_advertising()
+
+    assert peripheral.started == [advertisement]
+    assert peripheral.stopped is True
+    assert backend.advertisement is None

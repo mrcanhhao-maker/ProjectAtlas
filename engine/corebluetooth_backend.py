@@ -45,6 +45,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self._state_name = "unknown"
         self.added_service_count = 0
         self.service_errors: list[str] = []
+        self.advertising_started = False
+        self.advertising_errors: list[str] = []
         self._start()
 
     @property
@@ -111,6 +113,24 @@ class CoreBluetoothPeripheralManagerAdapter:
         self._manager.addService_(cb_service)
         return cb_service
 
+    def start_advertising(self, advertisement: BleAdvertisement) -> None:
+        if self._manager is None:
+            raise RuntimeError("CBPeripheralManager is not initialized")
+
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        payload = {
+            corebluetooth.CBAdvertisementDataLocalNameKey: advertisement.local_name,
+            corebluetooth.CBAdvertisementDataServiceUUIDsKey: [
+                self._build_uuid(uuid) for uuid in advertisement.service_uuids
+            ],
+        }
+        self._manager.startAdvertising_(payload)
+
+    def stop_advertising(self) -> None:
+        if self._manager is not None:
+            self._manager.stopAdvertising()
+        self.advertising_started = False
+
     @staticmethod
     def _build_uuid(uuid: str) -> Any:
         corebluetooth = importlib.import_module("CoreBluetooth")
@@ -159,6 +179,12 @@ class CoreBluetoothPeripheralManagerAdapter:
                     return
                 adapter.service_errors.append(str(error))
 
+            def peripheralManagerDidStartAdvertising_error_(self, peripheral_manager: Any, error: Any) -> None:
+                if error is None:
+                    adapter.advertising_started = True
+                    return
+                adapter.advertising_errors.append(str(error))
+
         self._delegate = PeripheralDelegate.alloc().init()
         self._manager = CBPeripheralManager.alloc().initWithDelegate_queue_options_(
             self._delegate,
@@ -202,8 +228,14 @@ class CoreBluetoothBackend(BleBackend):
 
     def start_advertising(self, advertisement: BleAdvertisement) -> None:
         self.advertisement = advertisement
+        start_advertising = getattr(self.peripheral_manager, "start_advertising", None)
+        if callable(start_advertising):
+            start_advertising(advertisement)
 
     def stop_advertising(self) -> None:
+        stop_advertising = getattr(self.peripheral_manager, "stop_advertising", None)
+        if callable(stop_advertising):
+            stop_advertising()
         self.advertisement = None
 
     def notify(self, characteristic_uuid: str, payload: bytes) -> None:
