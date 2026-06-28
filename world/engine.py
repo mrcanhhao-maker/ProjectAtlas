@@ -42,7 +42,10 @@ class RiverWorldEngine:
         self.boat = BoatState(lane_x=0.0, distance=0.0, speed=0.0)
 
     def step(self, stroke: StrokeInput, dt: float) -> WorldEngineSnapshot:
-        environment_force = self.environment.force_at_distance(self.boat.distance)
+        environment_force = self.environment.force_at_position(
+            lane_x=self.boat.lane_x,
+            distance=self.boat.distance,
+        )
         self.boat = self.physics.step(self.boat, stroke, dt, environment_force)
         camera_state = self.camera.follow(self.boat)
         mission_state = self.mission.evaluate(self.boat)
