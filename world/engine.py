@@ -8,6 +8,7 @@ from world.physics import BoatState, RowingPhysics, StrokeInput
 from world.objects import WorldObject
 from world.renderer import RenderFrame, RiverRenderer
 from world.river_map import RiverMap
+from world.streaming import RiverStream
 from world.viewport import ViewportFactory
 
 
@@ -27,7 +28,8 @@ class RiverWorldEngine:
         self.renderer = RiverRenderer()
         self.viewport_factory = ViewportFactory()
         self.culler = ViewportCuller()
-        self.world_objects = self._build_world_objects(river_map)
+        self.static_world_objects = self._build_world_objects(river_map)
+        self.river_stream = RiverStream()
         self.boat = BoatState(lane_x=0.0, distance=0.0, speed=0.0)
 
     def step(self, stroke: StrokeInput, dt: float) -> WorldEngineSnapshot:
@@ -36,7 +38,9 @@ class RiverWorldEngine:
         mission_state = self.mission.evaluate(self.boat)
         hud_snapshot = self.hud.build(self.boat, mission_state)
         viewport = self.viewport_factory.from_camera(camera_state)
-        visible_objects = self.culler.visible_objects(self.world_objects, viewport)
+        streamed_objects = self.river_stream.update(viewport)
+        world_objects = self.static_world_objects + streamed_objects
+        visible_objects = self.culler.visible_objects(world_objects, viewport)
         frame = self.renderer.build_frame(self.river_map, camera_state, hud_snapshot, visible_objects)
         return WorldEngineSnapshot(boat=self.boat, frame=frame)
 
