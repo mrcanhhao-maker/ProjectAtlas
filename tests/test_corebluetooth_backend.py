@@ -301,7 +301,6 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
     assert adapter.last_advertising_payload == {
         "local_name": "ProjectAtlas-FTMS",
         "service_uuids": ["CBUUID:00001826-0000-1000-8000-00805f9b34fb"],
-        "appearance": 1152,
     }
     assert adapter._manager.payload == adapter.last_advertising_payload
 

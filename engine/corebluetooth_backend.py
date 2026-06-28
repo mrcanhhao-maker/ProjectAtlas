@@ -155,8 +155,6 @@ class CoreBluetoothPeripheralManagerAdapter:
                 self._build_uuid(uuid) for uuid in advertisement.service_uuids
             ],
         }
-        if advertisement.appearance is not None:
-            payload[corebluetooth.CBAdvertisementDataAppearanceKey] = advertisement.appearance
         self.pending_advertisement = None
         self.last_advertising_payload = payload
         self._manager.startAdvertising_(payload)
