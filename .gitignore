@@ -2,3 +2,5 @@
 sessions/*.jsonl
 sessions/*.csv
 tmp_session_test/
+__pycache__/
+*.py[cod]
