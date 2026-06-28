@@ -151,3 +151,58 @@ def test_corebluetooth_peripheral_manager_adapter_handles_unreadable_manager_sta
 
     assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(MissingState()) == "unknown"
     assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(BrokenState()) == "unknown"
+
+
+def test_corebluetooth_backend_add_service_forwards_to_peripheral_manager(monkeypatch):
+    monkeypatch.setattr(
+        CoreBluetoothBackend,
+        "check_availability",
+        staticmethod(lambda: CoreBluetoothAvailability(True, True)),
+    )
+
+    class CapturingPeripheralManager:
+        def __init__(self):
+            self.added_services = []
+
+        @property
+        def state_name(self):
+            return "powered_on"
+
+        def add_service(self, service):
+            self.added_services.append(service)
+
+    peripheral = CapturingPeripheralManager()
+    backend = CoreBluetoothBackend(peripheral_manager_factory=lambda: peripheral)
+    service = BleService(
+        uuid="service",
+        characteristics=(BleCharacteristic(uuid="char", properties=("read", "notify")),),
+    )
+
+    backend.add_service(service)
+
+    assert backend.services == [service]
+    assert peripheral.added_services == [service]
+
+
+def test_corebluetooth_peripheral_manager_adapter_maps_properties_and_permissions(monkeypatch):
+    import engine.corebluetooth_backend as module
+
+    class FakeCoreBluetooth:
+        CBCharacteristicPropertyRead = 2
+        CBCharacteristicPropertyWriteWithoutResponse = 4
+        CBCharacteristicPropertyWrite = 8
+        CBCharacteristicPropertyNotify = 16
+        CBAttributePermissionsReadable = 1
+        CBAttributePermissionsWriteable = 2
+
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: FakeCoreBluetooth)
+
+    properties = CoreBluetoothPeripheralManagerAdapter._map_characteristic_properties(
+        ("read", "notify", "write", "write_without_response")
+    )
+    permissions = CoreBluetoothPeripheralManagerAdapter._map_characteristic_permissions(
+        ("read", "write", "write_without_response")
+    )
+
+    assert properties == 30
+    assert permissions == 3

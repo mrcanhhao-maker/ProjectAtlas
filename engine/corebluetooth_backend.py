@@ -6,7 +6,7 @@ import importlib.util
 import time
 from typing import Any, Callable
 
-from engine.ble_backend import BleAdvertisement, BleBackend, BleService
+from engine.ble_backend import BleAdvertisement, BleBackend, BleCharacteristic, BleService
 
 
 @dataclass(frozen=True)
@@ -82,6 +82,62 @@ class CoreBluetoothPeripheralManagerAdapter:
                 foundation.NSDate.dateWithTimeIntervalSinceNow_(0.01)
             )
 
+    def build_mutable_service(self, service: BleService) -> Any:
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        cb_service = corebluetooth.CBMutableService.alloc().initWithType_primary_(
+            self._build_uuid(service.uuid),
+            True,
+        )
+        cb_service.setCharacteristics_(
+            [self.build_mutable_characteristic(characteristic) for characteristic in service.characteristics]
+        )
+        return cb_service
+
+    def build_mutable_characteristic(self, characteristic: BleCharacteristic) -> Any:
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        return corebluetooth.CBMutableCharacteristic.alloc().initWithType_properties_value_permissions_(
+            self._build_uuid(characteristic.uuid),
+            self._map_characteristic_properties(characteristic.properties),
+            None,
+            self._map_characteristic_permissions(characteristic.properties),
+        )
+
+    def add_service(self, service: BleService) -> Any:
+        if self._manager is None:
+            raise RuntimeError("CBPeripheralManager is not initialized")
+        cb_service = self.build_mutable_service(service)
+        self._manager.addService_(cb_service)
+        return cb_service
+
+    @staticmethod
+    def _build_uuid(uuid: str) -> Any:
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        return corebluetooth.CBUUID.UUIDWithString_(uuid)
+
+    @staticmethod
+    def _map_characteristic_properties(properties: tuple[str, ...]) -> int:
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        value = 0
+        if "read" in properties:
+            value |= int(corebluetooth.CBCharacteristicPropertyRead)
+        if "notify" in properties:
+            value |= int(corebluetooth.CBCharacteristicPropertyNotify)
+        if "write" in properties:
+            value |= int(corebluetooth.CBCharacteristicPropertyWrite)
+        if "write_without_response" in properties:
+            value |= int(corebluetooth.CBCharacteristicPropertyWriteWithoutResponse)
+        return value
+
+    @staticmethod
+    def _map_characteristic_permissions(properties: tuple[str, ...]) -> int:
+        corebluetooth = importlib.import_module("CoreBluetooth")
+        value = 0
+        if "read" in properties:
+            value |= int(corebluetooth.CBAttributePermissionsReadable)
+        if "write" in properties or "write_without_response" in properties:
+            value |= int(corebluetooth.CBAttributePermissionsWriteable)
+        return value
+
     def _start(self) -> None:
         foundation = importlib.import_module("Foundation")
         corebluetooth = importlib.import_module("CoreBluetooth")
@@ -132,6 +188,9 @@ class CoreBluetoothBackend(BleBackend):
 
     def add_service(self, service: BleService) -> None:
         self.services.append(service)
+        add_service = getattr(self.peripheral_manager, "add_service", None)
+        if callable(add_service):
+            add_service(service)
 
     def start_advertising(self, advertisement: BleAdvertisement) -> None:
         self.advertisement = advertisement
