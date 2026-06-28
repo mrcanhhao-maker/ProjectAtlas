@@ -116,6 +116,7 @@ class VirtualRowerEngine:
             drive_ratio=drive_ratio,
             stroke_delta=stroke_delta,
             is_moving=is_moving,
+            drive_speed=drive_speed,
         )
 
         speed = self._power_to_speed_mps(power)
@@ -148,15 +149,25 @@ class VirtualRowerEngine:
         drive_ratio: float,
         stroke_delta: int,
         is_moving: bool,
+        drive_speed: float = 0.0,
     ) -> int:
         if not is_moving:
             return 0
 
-        normalized_spm = max(0.0, min(spm, 42.0)) / 30.0
+        camera_spm = 0.0
+        if drive_speed > 0.0:
+            camera_spm = 10.0 + min(drive_speed, 1.2) * 18.0
+
+        effective_spm = max(spm, camera_spm)
+        normalized_spm = max(0.0, min(effective_spm, 42.0)) / 30.0
         normalized_quality = max(0.15, min(quality_score, 1.0))
         normalized_drive = max(0.35, min(drive_ratio if drive_ratio > 0 else 0.8, 1.4))
 
-        base_power = 95.0 * (normalized_spm ** 2.7)
+        camera_power_floor = 0.0
+        if drive_speed >= 0.10:
+            camera_power_floor = 18.0 + min(drive_speed, 1.2) * 95.0
+
+        base_power = max(camera_power_floor, 95.0 * (normalized_spm ** 2.7))
         drag_multiplier = max(0.75, min(self.drag_factor / 115.0, 1.35))
         stroke_boost = 1.08 if stroke_delta > 0 else 1.0
 
