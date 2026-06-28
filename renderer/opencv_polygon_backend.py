@@ -19,9 +19,13 @@ class OpenCvPolygonBackend:
         self.frame = frame
         self.color = color
 
-    def draw_polygon(self, points: tuple[Point, ...]) -> None:
+    def draw_polygon(
+        self,
+        points: tuple[Point, ...],
+        color: Color | None = None,
+    ) -> None:
         pts = np.array(
             [[int(round(x)), int(round(y))] for x, y in points],
             dtype=np.int32,
         )
-        cv2.fillPoly(self.frame, [pts], self.color)
+        cv2.fillPoly(self.frame, [pts], color or self.color)
