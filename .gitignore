@@ -1,0 +1,4 @@
+# ProjectAtlas runtime session logs
+sessions/*.jsonl
+sessions/*.csv
+tmp_session_test/
