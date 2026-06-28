@@ -18,6 +18,20 @@ from engine.motion_metrics import MotionMetrics
 from engine.stroke_validator import StrokeValidator
 from engine.virtual_rower import VirtualRowerEngine
 
+def draw_text(frame, text, x, y):
+    import cv2
+    cv2.putText(
+        frame,
+        str(text),
+        (int(x), int(y)),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.7,
+        (0, 255, 0),
+        2,
+        cv2.LINE_AA,
+    )
+
+
 
 def main():
     cap = cv2.VideoCapture(0)
