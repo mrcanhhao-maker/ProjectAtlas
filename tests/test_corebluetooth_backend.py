@@ -265,6 +265,7 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
         CBUUID = FakeUUID
         CBAdvertisementDataLocalNameKey = "local_name"
         CBAdvertisementDataServiceUUIDsKey = "service_uuids"
+        CBAdvertisementDataAppearanceKey = "appearance"
 
     class FakeManager:
         def __init__(self):
@@ -292,6 +293,7 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
     advertisement = BleAdvertisement(
         local_name="ProjectAtlas-FTMS",
         service_uuids=("00001826-0000-1000-8000-00805f9b34fb",),
+        appearance=1152,
     )
 
     adapter.start_advertising(advertisement)
@@ -299,6 +301,7 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
     assert adapter.last_advertising_payload == {
         "local_name": "ProjectAtlas-FTMS",
         "service_uuids": ["CBUUID:00001826-0000-1000-8000-00805f9b34fb"],
+        "appearance": 1152,
     }
     assert adapter._manager.payload == adapter.last_advertising_payload
 

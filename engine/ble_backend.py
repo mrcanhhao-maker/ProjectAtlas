@@ -21,6 +21,7 @@ class BleService:
 class BleAdvertisement:
     local_name: str
     service_uuids: tuple[str, ...]
+    appearance: int | None = None
 
 
 class BleBackend(Protocol):

@@ -23,6 +23,7 @@ class FtmsBlePeripheralController:
             BleAdvertisement(
                 local_name=self.local_name,
                 service_uuids=(FTMS_GATT_PROFILE.service_uuid,),
+                appearance=1152,
             )
         )
         self.started = True
