@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from world.camera import TopDownRiverCamera
+from world.collision import CollisionEngine, CollisionReport
 from world.culling import ViewportCuller
 from world.environment import RiverEnvironment
 from world.hud import RiverHud
@@ -18,6 +19,7 @@ from world.viewport import ViewportFactory
 class WorldEngineSnapshot:
     boat: BoatState
     frame: RenderFrame
+    collision: CollisionReport
 
 
 class RiverWorldEngine:
@@ -32,6 +34,7 @@ class RiverWorldEngine:
         self.renderer = RiverRenderer()
         self.viewport_factory = ViewportFactory()
         self.culler = ViewportCuller()
+        self.collision_engine = CollisionEngine()
         self.static_world_objects = self._build_world_objects(river_map)
         self.river_stream = RiverStream(
             generator=RiverChunkGenerator(procedural=self.procedural)
@@ -48,8 +51,9 @@ class RiverWorldEngine:
         streamed_objects = self.river_stream.update(viewport)
         world_objects = self.static_world_objects + streamed_objects
         visible_objects = self.culler.visible_objects(world_objects, viewport)
+        collision_report = self.collision_engine.detect(self.boat, world_objects)
         frame = self.renderer.build_frame(self.river_map, camera_state, hud_snapshot, visible_objects)
-        return WorldEngineSnapshot(boat=self.boat, frame=frame)
+        return WorldEngineSnapshot(boat=self.boat, frame=frame, collision=collision_report)
 
 
     def _build_world_objects(self, river_map: RiverMap) -> tuple[WorldObject, ...]:

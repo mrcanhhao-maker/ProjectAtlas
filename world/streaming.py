@@ -37,20 +37,30 @@ class RiverChunkGenerator:
         bend_x = spec.center_x
         river_width = spec.width
 
-        objects = (
+        objects = [
             WorldObject(
                 object_id=f"chunk:{index}:river_center",
                 kind="river_center",
                 position=Vec2(bend_x, start_y + self.chunk_height / 2),
                 radius=river_width / 2,
-            ),
-        )
+            )
+        ]
+
+        if spec.rock_offset_x is not None and spec.rock_offset_y is not None:
+            objects.append(
+                WorldObject(
+                    object_id=f"chunk:{index}:rock:0",
+                    kind="rock",
+                    position=Vec2(bend_x + spec.rock_offset_x, start_y + spec.rock_offset_y),
+                    radius=34.0,
+                )
+            )
 
         return RiverChunk(
             index=index,
             start_y=start_y,
             end_y=end_y,
-            objects=objects,
+            objects=tuple(objects),
         )
 
 class RiverStream:
