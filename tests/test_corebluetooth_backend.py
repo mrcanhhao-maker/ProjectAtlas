@@ -93,3 +93,36 @@ def test_corebluetooth_backend_keeps_running_when_real_peripheral_manager_is_gua
     assert backend.has_peripheral_manager is False
     assert backend.peripheral_manager is None
     assert backend.peripheral_manager_error == "CBPeripheralManager unavailable: permission denied"
+
+
+def test_corebluetooth_backend_peripheral_manager_adapter_can_pump_run_loop(monkeypatch):
+    import engine.corebluetooth_backend as module
+
+    events = []
+
+    class FakeDate:
+        @staticmethod
+        def dateWithTimeIntervalSinceNow_(seconds):
+            events.append(("date", seconds))
+            return "fake-date"
+
+    class FakeRunLoop:
+        def runUntilDate_(self, date):
+            events.append(("run", date))
+
+    class FakeNSRunLoop:
+        @staticmethod
+        def currentRunLoop():
+            return FakeRunLoop()
+
+    class FakeFoundation:
+        NSDate = FakeDate
+        NSRunLoop = FakeNSRunLoop
+
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: FakeFoundation)
+
+    adapter = object.__new__(module.CoreBluetoothPeripheralManagerAdapter)
+    adapter.pump_run_loop(0.02)
+
+    assert any(event[0] == "date" for event in events)
+    assert any(event[0] == "run" for event in events)

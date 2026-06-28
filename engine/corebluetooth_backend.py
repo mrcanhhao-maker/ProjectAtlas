@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import importlib
 import importlib.util
+import time
 from typing import Any, Callable
 
 from engine.ble_backend import BleAdvertisement, BleBackend, BleService
@@ -42,6 +43,20 @@ class CoreBluetoothPeripheralManagerAdapter:
     @property
     def state_name(self) -> str:
         return self._state_name
+
+
+    def pump_run_loop(self, duration_seconds: float = 0.25) -> None:
+        if duration_seconds <= 0:
+            return
+
+        foundation = importlib.import_module("Foundation")
+        run_loop = foundation.NSRunLoop.currentRunLoop()
+        deadline = time.monotonic() + duration_seconds
+
+        while time.monotonic() < deadline:
+            run_loop.runUntilDate_(
+                foundation.NSDate.dateWithTimeIntervalSinceNow_(0.01)
+            )
 
     def _start(self) -> None:
         foundation = importlib.import_module("Foundation")
