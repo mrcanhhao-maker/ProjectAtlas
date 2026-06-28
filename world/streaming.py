@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from world.objects import WorldObject
+from world.procedural import ProceduralRiverGenerator
 from world.vector import Vec2
 from world.viewport import Viewport
 
@@ -19,16 +20,22 @@ class RiverChunk:
 
 
 class RiverChunkGenerator:
-    def __init__(self, chunk_height: float = 600.0) -> None:
+    def __init__(
+        self,
+        chunk_height: float = 600.0,
+        procedural: ProceduralRiverGenerator | None = None,
+    ) -> None:
         if chunk_height <= 0:
             raise ValueError("chunk_height must be positive")
         self.chunk_height = chunk_height
+        self.procedural = procedural or ProceduralRiverGenerator(seed="atlas-alpha15")
 
     def chunk_for_index(self, index: int) -> RiverChunk:
         start_y = -((index + 1) * self.chunk_height)
         end_y = -(index * self.chunk_height)
-        bend_x = self._bend_x(index)
-        river_width = max(260.0, 420.0 - (index * 8.0))
+        spec = self.procedural.chunk_spec(index)
+        bend_x = spec.center_x
+        river_width = spec.width
 
         objects = (
             WorldObject(
@@ -45,11 +52,6 @@ class RiverChunkGenerator:
             end_y=end_y,
             objects=objects,
         )
-
-    def _bend_x(self, index: int) -> float:
-        pattern = (0.0, 28.0, -35.0, 18.0, -12.0)
-        return pattern[index % len(pattern)]
-
 
 class RiverStream:
     def __init__(
