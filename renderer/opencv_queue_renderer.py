@@ -18,9 +18,8 @@ class OpenCvQueueRenderer(QueueRendererContract):
 
     def render(self, queue: RenderCommandQueue) -> None:
         for command in queue.commands:
-            if command.layer == "river":
-                color = self._layer_colors.get(command.layer)
-                if color is None:
-                    self._backend.draw_polygon(command.points)
-                else:
-                    self._backend.draw_polygon(command.points, color=color)
+            color = self._layer_colors.get(command.layer)
+            if color is None:
+                self._backend.draw_polygon(command.points)
+            else:
+                self._backend.draw_polygon(command.points, color=color)
