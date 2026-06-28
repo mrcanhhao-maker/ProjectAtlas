@@ -20,6 +20,18 @@ class WorldRenderSnapshot:
 
 
 class WorldSceneAdapter:
+    def _world_x(self, obj: Any) -> float:
+        if hasattr(obj, "x"):
+            return float(getattr(obj, "x"))
+        position = getattr(obj, "position")
+        return float(getattr(position, "x"))
+
+    def _world_y(self, obj: Any) -> float:
+        if hasattr(obj, "y"):
+            return float(getattr(obj, "y"))
+        position = getattr(obj, "position")
+        return float(getattr(position, "y"))
+
     def build_scene(self, snapshot: WorldRenderSnapshot) -> SceneGraph:
         nodes: list[SceneNode] = []
 
@@ -27,8 +39,8 @@ class WorldSceneAdapter:
             nodes.append(
                 SceneNode(
                     kind="rock",
-                    world_x=float(getattr(rock, "x")),
-                    world_y=float(getattr(rock, "y")),
+                    world_x=self._world_x(rock),
+                    world_y=self._world_y(rock),
                     radius=float(getattr(rock, "radius", 1.0)),
                     color=(82, 82, 82),
                 )
@@ -38,8 +50,8 @@ class WorldSceneAdapter:
             nodes.append(
                 SceneNode(
                     kind="checkpoint",
-                    world_x=float(getattr(checkpoint, "x")),
-                    world_y=float(getattr(checkpoint, "y")),
+                    world_x=self._world_x(checkpoint),
+                    world_y=self._world_y(checkpoint),
                     width=float(getattr(checkpoint, "width", 10.0)),
                     color=(0, 220, 255),
                     label=str(getattr(checkpoint, "label", "")),
@@ -50,8 +62,8 @@ class WorldSceneAdapter:
             nodes.append(
                 SceneNode(
                     kind="current_zone",
-                    world_x=float(getattr(zone, "x")),
-                    world_y=float(getattr(zone, "y")),
+                    world_x=self._world_x(zone),
+                    world_y=self._world_y(zone),
                     width=float(getattr(zone, "width", 10.0)),
                     height=float(getattr(zone, "height", 8.0)),
                     color=(255, 160, 0),

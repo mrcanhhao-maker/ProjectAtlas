@@ -63,3 +63,33 @@ def test_world_scene_adapter_output_renders_with_opencv_renderer():
 
     assert frame.shape == (360, 640, 3)
     assert frame.sum() > 0
+
+def test_world_scene_adapter_reads_world_object_position_for_first_playable_river():
+    from world.objects import WorldObject
+    from world.vector import Vec2
+
+    snapshot = WorldRenderSnapshot(
+        boat=BoatSnapshot(x=0.0, y=100.0),
+        rocks=(WorldObject(object_id="rock:1", kind="rock", position=Vec2(2.0, 112.0), radius=1.4),),
+        checkpoints=(WorldObject(object_id="checkpoint:1", kind="checkpoint", position=Vec2(0.0, 130.0), radius=6.0),),
+        current_zones=(WorldObject(object_id="current:1", kind="current_zone", position=Vec2(-1.0, 118.0), radius=4.0),),
+        hud_lines=("Alpha 16.5.1",),
+    )
+
+    scene = WorldSceneAdapter().build_scene(snapshot)
+
+    assert len(scene.nodes) == 3
+    assert scene.nodes[0].kind == "rock"
+    assert scene.nodes[0].world_x == 2.0
+    assert scene.nodes[0].world_y == 112.0
+    assert scene.nodes[0].radius == 1.4
+
+    assert scene.nodes[1].kind == "checkpoint"
+    assert scene.nodes[1].world_x == 0.0
+    assert scene.nodes[1].world_y == 130.0
+    assert scene.nodes[1].width > 0
+
+    assert scene.nodes[2].kind == "current_zone"
+    assert scene.nodes[2].world_x == -1.0
+    assert scene.nodes[2].world_y == 118.0
+    assert scene.nodes[2].width > 0

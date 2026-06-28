@@ -39,7 +39,7 @@ def test_playable_world_update_moves_boat_and_snapshot_tracks_it():
     assert len(snapshot.rocks) == 1
     assert len(snapshot.checkpoints) == 1
     assert len(snapshot.current_zones) == 1
-    assert "Alpha 16.2" in snapshot.hud_lines[0]
+    assert "Alpha 16.5" in snapshot.hud_lines[0]
 
 
 def test_first_world_scene_render_loop_produces_frame_after_update():
