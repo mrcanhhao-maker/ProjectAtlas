@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import json
 
+from engine.ble_backend_factory import BleBackendFactory
 from engine.ftms_ble_peripheral import FtmsBlePeripheralController
 from engine.ftms_constants import FTMS_GATT_PROFILE
 from engine.ftms_decoder import FtmsRowingMeasurementDecoder
-from engine.mock_ble_backend import MockBleBackend
 
 
 def main() -> None:
-    backend = MockBleBackend()
+    selection = BleBackendFactory().create(prefer_native=True)
+    backend = selection.backend
+
     controller = FtmsBlePeripheralController(backend, local_name="ProjectAtlas")
     decoder = FtmsRowingMeasurementDecoder()
 
@@ -31,6 +33,8 @@ def main() -> None:
     decoded = decoder.decode(payload)
 
     checks = {
+        "backend_factory_used": selection.name in {"mock", "corebluetooth_pending"},
+        "backend_selected": backend is not None,
         "service_registered": len(backend.services) == 1 and backend.services[0].uuid == FTMS_GATT_PROFILE.service_uuid,
         "advertising_started": backend.advertisement is not None and backend.advertisement.local_name == "ProjectAtlas",
         "rower_data_notified": len(backend.notifications) == 1 and backend.notifications[0].characteristic_uuid == FTMS_GATT_PROFILE.rower_data_uuid,
@@ -47,13 +51,18 @@ def main() -> None:
     print(json.dumps(
         {
             "stage": "stage4",
-            "version": "Alpha14.6",
+            "version": "Alpha14.10",
             "status": status,
-            "scope": "BLE architecture with mock backend only; no CoreBluetooth yet",
+            "scope": "BLE architecture through backend factory; CoreBluetooth backend not implemented yet",
+            "backend": {
+                "name": selection.name,
+                "reason": selection.reason,
+                "native_ready": selection.native_ready,
+            },
             "checks": checks,
             "payload_hex": payload.hex(" "),
             "decoded": decoded,
-            "next": "Investigate macOS CoreBluetooth peripheral backend.",
+            "next": "Implement guarded CoreBluetooth backend skeleton.",
         },
         indent=2,
         ensure_ascii=False,
