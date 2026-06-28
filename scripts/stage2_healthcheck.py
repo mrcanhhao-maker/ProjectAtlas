@@ -23,6 +23,7 @@ REQUIRED_FILES = [
     "engine/stroke_validator.py",
     "engine/stroke_history.py",
     "engine/virtual_rower.py",
+    "engine/session_recorder.py",
     "plugins/visionrow/alpha10/app_alpha10.py",
     "plugins/visionrow/alpha12/app_alpha12.py",
     "scripts/stage1_healthcheck.py",
@@ -40,6 +41,7 @@ REQUIRED_MODULES = [
     "engine.stroke_validator",
     "engine.stroke_history",
     "engine.virtual_rower",
+    "engine.session_recorder",
 ]
 
 
