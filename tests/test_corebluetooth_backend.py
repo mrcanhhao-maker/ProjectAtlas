@@ -252,3 +252,53 @@ def test_corebluetooth_backend_start_advertising_forwards_to_peripheral_manager(
     assert peripheral.started == [advertisement]
     assert peripheral.stopped is True
     assert backend.advertisement is None
+
+def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monkeypatch):
+    import engine.corebluetooth_backend as module
+
+    class FakeUUID:
+        @staticmethod
+        def UUIDWithString_(uuid):
+            return f"CBUUID:{uuid}"
+
+    class FakeCoreBluetooth:
+        CBUUID = FakeUUID
+        CBAdvertisementDataLocalNameKey = "local_name"
+        CBAdvertisementDataServiceUUIDsKey = "service_uuids"
+
+    class FakeManager:
+        def __init__(self):
+            self.payload = None
+            self.stopped = False
+
+        def startAdvertising_(self, payload):
+            self.payload = payload
+
+        def stopAdvertising(self):
+            self.stopped = True
+
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: FakeCoreBluetooth)
+
+    adapter = object.__new__(module.CoreBluetoothPeripheralManagerAdapter)
+    adapter._manager = FakeManager()
+    adapter.advertising_started = True
+    adapter.last_advertising_payload = None
+
+    advertisement = BleAdvertisement(
+        local_name="ProjectAtlas-FTMS",
+        service_uuids=("00001826-0000-1000-8000-00805f9b34fb",),
+    )
+
+    adapter.start_advertising(advertisement)
+
+    assert adapter.last_advertising_payload == {
+        "local_name": "ProjectAtlas-FTMS",
+        "service_uuids": ["CBUUID:00001826-0000-1000-8000-00805f9b34fb"],
+    }
+    assert adapter._manager.payload == adapter.last_advertising_payload
+
+    adapter.stop_advertising()
+
+    assert adapter._manager.stopped is True
+    assert adapter.advertising_started is False
+    assert adapter.last_advertising_payload is None

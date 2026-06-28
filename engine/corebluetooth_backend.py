@@ -47,6 +47,7 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.service_errors: list[str] = []
         self.advertising_started = False
         self.advertising_errors: list[str] = []
+        self.last_advertising_payload: dict[Any, Any] | None = None
         self._start()
 
     @property
@@ -124,12 +125,14 @@ class CoreBluetoothPeripheralManagerAdapter:
                 self._build_uuid(uuid) for uuid in advertisement.service_uuids
             ],
         }
+        self.last_advertising_payload = payload
         self._manager.startAdvertising_(payload)
 
     def stop_advertising(self) -> None:
         if self._manager is not None:
             self._manager.stopAdvertising()
         self.advertising_started = False
+        self.last_advertising_payload = None
 
     @staticmethod
     def _build_uuid(uuid: str) -> Any:
