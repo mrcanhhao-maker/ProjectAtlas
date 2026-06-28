@@ -8,6 +8,7 @@ from typing import Dict, Protocol
 class BleCharacteristic:
     uuid: str
     properties: tuple[str, ...]
+    value: bytes | None = None
 
 
 @dataclass(frozen=True)

@@ -103,7 +103,7 @@ class CoreBluetoothPeripheralManagerAdapter:
         return corebluetooth.CBMutableCharacteristic.alloc().initWithType_properties_value_permissions_(
             self._build_uuid(characteristic.uuid),
             self._map_characteristic_properties(characteristic.properties),
-            None,
+            characteristic.value,
             self._map_characteristic_permissions(characteristic.properties),
         )
 

@@ -15,6 +15,7 @@ def build_ftms_gatt_service() -> BleService:
             BleCharacteristic(
                 uuid=FTMS_GATT_PROFILE.fitness_machine_feature_uuid,
                 properties=("read",),
+                value=bytes.fromhex("0000000000000000"),
             ),
             BleCharacteristic(
                 uuid=FTMS_GATT_PROFILE.fitness_machine_status_uuid,
