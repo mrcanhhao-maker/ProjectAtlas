@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 from renderer.scene_graph import SceneGraph, SceneNode
+from renderer.render_queue import RenderQueue
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,50 @@ class OpenCVWorldRenderer:
         self._draw_boat(frame)
         self._draw_hud(frame, scene)
         return frame
+
+
+    def render_queue(self, queue: RenderQueue, boat: BoatLike) -> np.ndarray:
+        frame = np.zeros((self.config.height, self.config.width, 3), dtype=np.uint8)
+        frame[:] = (42, 92, 126)
+
+        self._draw_river_banks(frame)
+        for command in queue.commands:
+            self._draw_command(frame, command, boat)
+        self._draw_boat(frame)
+        return frame
+
+    def _draw_command(self, frame: np.ndarray, command, boat: BoatLike) -> None:
+        if command.kind == "circle":
+            x, y = self.world_to_screen(command.world_x, command.world_y, boat)
+            cv2.circle(frame, (x, y), max(2, int(command.radius * self.config.pixels_per_meter)), command.color, -1)
+        elif command.kind == "line":
+            if len(command.points) != 2:
+                return
+            p1 = self.world_to_screen(command.points[0][0], command.points[0][1], boat)
+            p2 = self.world_to_screen(command.points[1][0], command.points[1][1], boat)
+            cv2.line(frame, p1, p2, command.color, command.thickness)
+        elif command.kind == "rect":
+            x, y = self.world_to_screen(command.world_x, command.world_y, boat)
+            half_w = max(4, int(command.width * self.config.pixels_per_meter * 0.5))
+            half_h = max(4, int(command.height * self.config.pixels_per_meter * 0.5))
+            if command.alpha < 1.0:
+                overlay = frame.copy()
+                cv2.rectangle(overlay, (x - half_w, y - half_h), (x + half_w, y + half_h), command.color, -1)
+                cv2.addWeighted(overlay, command.alpha, frame, 1.0 - command.alpha, 0, frame)
+                cv2.rectangle(frame, (x - half_w, y - half_h), (x + half_w, y + half_h), command.color, 1)
+            else:
+                cv2.rectangle(frame, (x - half_w, y - half_h), (x + half_w, y + half_h), command.color, -1)
+        elif command.kind == "polygon":
+            points = np.array([self.world_to_screen(x, y, boat) for x, y in command.points], dtype=np.int32)
+            if len(points) >= 3:
+                cv2.fillPoly(frame, [points], command.color)
+        elif command.kind == "text":
+            if command.layer >= 1000:
+                x = int(round(command.world_x * 18))
+                y = int(round(command.world_y * 32))
+            else:
+                x, y = self.world_to_screen(command.world_x, command.world_y, boat)
+            cv2.putText(frame, command.text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, command.font_scale, command.color, command.thickness)
 
     def _draw_river_banks(self, frame: np.ndarray) -> None:
         h, w = self.config.height, self.config.width
