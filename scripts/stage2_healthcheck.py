@@ -24,6 +24,7 @@ REQUIRED_FILES = [
     "engine/stroke_history.py",
     "engine/virtual_rower.py",
     "plugins/visionrow/alpha10/app_alpha10.py",
+    "plugins/visionrow/alpha12/app_alpha12.py",
     "scripts/stage1_healthcheck.py",
     "tests/test_virtual_rower_engine.py",
     "docs/STAGE1_LOCK.md",
