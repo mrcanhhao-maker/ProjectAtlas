@@ -21,5 +21,9 @@ def build_ftms_gatt_service() -> BleService:
                 uuid=FTMS_GATT_PROFILE.fitness_machine_status_uuid,
                 properties=("notify",),
             ),
+            BleCharacteristic(
+                uuid=FTMS_GATT_PROFILE.fitness_machine_control_point_uuid,
+                properties=("write", "indicate"),
+            ),
         ),
     )

@@ -27,11 +27,11 @@ signal.signal(signal.SIGTERM, stop)
 backend = CoreBluetoothBackend()
 backend.peripheral_manager.pump_run_loop(1.0)
 
-controller = FtmsBlePeripheralController(backend, local_name="ProjectAtlas-FTMS")
+controller = FtmsBlePeripheralController(backend, local_name="mrcanhhao")
 controller.start()
 
 print("ProjectAtlas FTMS BLE peripheral running")
-print("Open LightBlue/MyWhoosh and scan for ProjectAtlas-FTMS")
+print("Open LightBlue/MyWhoosh and scan for mrcanhhao")
 print("Press Ctrl+C to stop")
 
 try:

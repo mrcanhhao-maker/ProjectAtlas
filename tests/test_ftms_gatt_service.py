@@ -6,7 +6,7 @@ def test_build_ftms_gatt_service_uses_verified_profile():
     service = build_ftms_gatt_service()
 
     assert service.uuid == FTMS_GATT_PROFILE.service_uuid
-    assert len(service.characteristics) == 3
+    assert len(service.characteristics) == 4
 
 
 def test_build_ftms_gatt_service_contains_rower_data_notify():
