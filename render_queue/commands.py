@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from river_geometry import RiverPolygon
-
 
 Point = Tuple[float, float]
 
@@ -16,12 +14,3 @@ class PolygonRenderCommand:
 @dataclass(frozen=True)
 class RenderCommandQueue:
     commands: tuple[PolygonRenderCommand, ...]
-
-    @classmethod
-    def from_river_polygon(cls, polygon: RiverPolygon) -> "RenderCommandQueue":
-        return cls(commands=(
-            PolygonRenderCommand(
-                layer="river",
-                points=polygon.points,
-            ),
-        ))

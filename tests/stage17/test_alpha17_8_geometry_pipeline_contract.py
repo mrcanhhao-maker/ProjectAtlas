@@ -1,9 +1,10 @@
-from render_queue import RenderCommandQueue
+from render_extractor import RenderExtractor
 from river_geometry import (
     RiverCrossSection,
     RiverGeometryEngine,
     RiverPath,
 )
+from scene_graph import RiverSceneNodeFactory, SceneGraph
 
 
 def test_complete_river_geometry_pipeline_contract():
@@ -23,16 +24,17 @@ def test_complete_river_geometry_pipeline_contract():
 
     geometry = RiverGeometryEngine().build(path, section)
 
-    queue = RenderCommandQueue.from_river_polygon(
-        geometry.polygon
+    scene = SceneGraph.empty().add(
+        RiverSceneNodeFactory().create(geometry)
     )
+
+    queue = RenderExtractor().extract(scene)
 
     assert len(queue.commands) == 1
 
     command = queue.commands[0]
 
     assert command.layer == "river"
-
     assert command.points == geometry.polygon.points
 
     assert len(geometry.banks.left_bank) == len(path.points)
