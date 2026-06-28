@@ -91,13 +91,19 @@ class VirtualRowerEngine:
         spm = self._read_float(stroke_data, "spm", 0.0)
         quality_score = self._read_float(stroke_data, "quality_score", self._read_float(stroke_data, "confidence", 0.0))
         drive_ratio = self._read_float(stroke_data, "drive_ratio", 0.0)
+        drive_speed = self._read_float(stroke_data, "drive_speed", 0.0)
+        phase = str(stroke_data.get("phase", "")).upper()
 
         stroke_delta = max(0, stroke_count - self._last_stroke_count)
         self._last_stroke_count = stroke_count
 
-        is_active_signal = spm >= 8.0 or stroke_delta > 0
+        camera_motion_signal = drive_speed >= 0.10 and phase in {"DRIVE", "CATCH", "RECOVERY"}
+        is_active_signal = spm >= 6.0 or stroke_delta > 0 or camera_motion_signal
         if is_active_signal:
             self._last_moving_timestamp = now
+
+        if drive_ratio <= 0.0 and drive_speed > 0.0:
+            drive_ratio = max(0.45, min(1.25, 0.65 + drive_speed))
 
         is_moving = (
             self._last_moving_timestamp is not None
