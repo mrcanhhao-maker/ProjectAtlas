@@ -7,10 +7,6 @@ class OpenCvQueueRenderer(QueueRendererContract):
         self._backend = backend
 
     def render(self, queue: RenderCommandQueue) -> None:
-        if hasattr(self._backend, "render_queue"):
-            self._backend.render_queue(queue)
-            return
-
-        raise NotImplementedError(
-            "Backend must implement render_queue(RenderCommandQueue)"
-        )
+        for command in queue.commands:
+            if command.layer == "river":
+                self._backend.draw_polygon(command.points)

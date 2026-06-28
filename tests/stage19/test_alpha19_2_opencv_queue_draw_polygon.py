@@ -10,18 +10,16 @@ class FakeOpenCvBackend:
         self.polygons.append(tuple(points))
 
 
-def test_opencv_queue_renderer_consumes_render_queue():
+def test_opencv_queue_renderer_draws_river_polygon_command():
     backend = FakeOpenCvBackend()
     renderer = OpenCvQueueRenderer(backend)
 
-    queue = RenderCommandQueue(
-        commands=(
-            PolygonRenderCommand(
-                layer="river",
-                points=((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
-            ),
-        )
-    )
+    queue = RenderCommandQueue(commands=(
+        PolygonRenderCommand(
+            layer="river",
+            points=((0.0, 0.0), (1.0, 0.0), (1.0, 1.0)),
+        ),
+    ))
 
     renderer.render(queue)
 
