@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from engine.ftms_constants import FTMS_GATT_PROFILE, FTMS_ROWER_DATA_UUID_16, FTMS_SERVICE_UUID_16
 from engine.ftms_decoder import FtmsRowingMeasurementDecoder
 from engine.ftms_encoder import FtmsRowingMeasurementEncoder
 from engine.ftms_mapper import FtmsMapper
@@ -38,6 +39,7 @@ def main() -> None:
         "decoder": decoded["power_watts"] == 190 and decoded["stroke_count"] == 21,
         "validator": validation.ok is True,
         "payload_builder": encoder.encode(measurement) == payload,
+        "ftms_constants": FTMS_SERVICE_UUID_16 == 0x1826 and FTMS_ROWER_DATA_UUID_16 == 0x2AD1,
     }
 
     status = "PASS" if all(checks.values()) else "FAIL"
@@ -45,13 +47,14 @@ def main() -> None:
     print(json.dumps(
         {
             "stage": "stage3",
-            "version": "Alpha13.7",
+            "version": "Alpha13.10",
             "status": status,
             "scope": "FTMS preparation only; BLE GATT server not started",
             "checks": checks,
             "payload_hex": payload.hex(" "),
             "decoded": decoded,
-            "next": "Add FTMS constants and BLE service profile skeleton.",
+            "ftms_gatt_profile": FTMS_GATT_PROFILE.__dict__,
+            "next": "Add BLE GATT server planning docs after FTMS constants are locked.",
         },
         indent=2,
         ensure_ascii=False,
