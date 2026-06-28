@@ -51,7 +51,7 @@ def main():
     session_path = session_recorder.start()
     print(f"Recording session: {session_path}")
 
-    print("ProjectAtlas Alpha 12.9 Virtual Rower Engine + Session Recorder started")
+    print("ProjectAtlas Alpha 12.11 Virtual Rower Engine + Session Recorder started")
     print("Press Q to quit")
 
     prev_time = time.time()
@@ -101,7 +101,7 @@ def main():
 
         y = 40
         cv2.putText(frame,
-                    "ProjectAtlas Alpha12.4",
+                    "ProjectAtlas Alpha12.11",
                     (20, y),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.9,
@@ -129,7 +129,7 @@ def main():
         draw_text(frame, "Speed: {} m/s".format(rower_data.get("speed_mps", 0)), 20, 400)
         draw_text(frame, "Distance: {} m".format(rower_data.get("distance_m", 0)), 20, 440)
         draw_text(frame, "Moving: {}".format(rower_data.get("is_moving", False)), 20, 480)
-        cv2.imshow("ProjectAtlas Alpha12.4", frame)
+        cv2.imshow("ProjectAtlas Alpha12.11", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
