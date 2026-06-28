@@ -283,6 +283,10 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
     adapter._manager = FakeManager()
     adapter.advertising_started = True
     adapter.last_advertising_payload = None
+    adapter.pending_advertisement = None
+    adapter.auto_start_advertising_after_service_added = False
+    adapter.service_errors = []
+    adapter.added_service_count = 1
 
     advertisement = BleAdvertisement(
         local_name="ProjectAtlas-FTMS",
@@ -310,3 +314,55 @@ def test_corebluetooth_peripheral_manager_adapter_exposes_subscription_state():
 
     assert adapter.subscribed_characteristic_uuids == []
     assert adapter.unsubscribed_characteristic_uuids == []
+
+
+def test_corebluetooth_peripheral_manager_adapter_defers_advertising_until_service_added(monkeypatch):
+    import engine.corebluetooth_backend as module
+
+    class FakeUUID:
+        @staticmethod
+        def UUIDWithString_(uuid):
+            return f"CBUUID:{uuid}"
+
+    class FakeCoreBluetooth:
+        CBUUID = FakeUUID
+        CBAdvertisementDataLocalNameKey = "local_name"
+        CBAdvertisementDataServiceUUIDsKey = "service_uuids"
+
+    class FakeManager:
+        def __init__(self):
+            self.payload = None
+
+        def startAdvertising_(self, payload):
+            self.payload = payload
+
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: FakeCoreBluetooth)
+
+    adapter = object.__new__(module.CoreBluetoothPeripheralManagerAdapter)
+    adapter._manager = FakeManager()
+    adapter.added_service_count = 0
+    adapter.service_errors = []
+    adapter.pending_advertisement = None
+    adapter.auto_start_advertising_after_service_added = True
+    adapter.last_advertising_payload = None
+
+    advertisement = BleAdvertisement(
+        local_name="mrcanhhao512",
+        service_uuids=("00001826-0000-1000-8000-00805f9b34fb",),
+    )
+
+    adapter.start_advertising(advertisement)
+
+    assert adapter.pending_advertisement == advertisement
+    assert adapter.last_advertising_payload is None
+    assert adapter._manager.payload is None
+
+    adapter.added_service_count = 1
+    adapter._start_pending_advertising_if_ready()
+
+    assert adapter.pending_advertisement is None
+    assert adapter.last_advertising_payload == {
+        "local_name": "mrcanhhao512",
+        "service_uuids": ["CBUUID:00001826-0000-1000-8000-00805f9b34fb"],
+    }
+    assert adapter._manager.payload == adapter.last_advertising_payload

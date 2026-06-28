@@ -48,6 +48,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.advertising_started = False
         self.advertising_errors: list[str] = []
         self.last_advertising_payload: dict[Any, Any] | None = None
+        self.pending_advertisement: BleAdvertisement | None = None
+        self.auto_start_advertising_after_service_added = True
         self.subscribed_characteristic_uuids: list[str] = []
         self.unsubscribed_characteristic_uuids: list[str] = []
         self.mutable_characteristics_by_uuid: dict[str, Any] = {}
@@ -124,6 +126,20 @@ class CoreBluetoothPeripheralManagerAdapter:
         if self._manager is None:
             raise RuntimeError("CBPeripheralManager is not initialized")
 
+        if (
+            self.auto_start_advertising_after_service_added
+            and self.added_service_count <= 0
+            and not self.service_errors
+        ):
+            self.pending_advertisement = advertisement
+            return
+
+        self._start_advertising_now(advertisement)
+
+    def _start_advertising_now(self, advertisement: BleAdvertisement) -> None:
+        if self._manager is None:
+            raise RuntimeError("CBPeripheralManager is not initialized")
+
         corebluetooth = importlib.import_module("CoreBluetooth")
         payload = {
             corebluetooth.CBAdvertisementDataLocalNameKey: advertisement.local_name,
@@ -131,13 +147,22 @@ class CoreBluetoothPeripheralManagerAdapter:
                 self._build_uuid(uuid) for uuid in advertisement.service_uuids
             ],
         }
+        self.pending_advertisement = None
         self.last_advertising_payload = payload
         self._manager.startAdvertising_(payload)
+
+    def _start_pending_advertising_if_ready(self) -> None:
+        if self.pending_advertisement is None:
+            return
+        if self.added_service_count <= 0 or self.service_errors:
+            return
+        self._start_advertising_now(self.pending_advertisement)
 
     def stop_advertising(self) -> None:
         if self._manager is not None:
             self._manager.stopAdvertising()
         self.advertising_started = False
+        self.pending_advertisement = None
         self.last_advertising_payload = None
 
     def notify(self, characteristic_uuid: str, payload: bytes) -> bool:
@@ -203,6 +228,7 @@ class CoreBluetoothPeripheralManagerAdapter:
             def peripheralManager_didAddService_error_(self, peripheral_manager: Any, service: Any, error: Any) -> None:
                 if error is None:
                     adapter.added_service_count += 1
+                    adapter._start_pending_advertising_if_ready()
                     return
                 adapter.service_errors.append(str(error))
 
