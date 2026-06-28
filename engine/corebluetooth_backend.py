@@ -50,6 +50,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.last_advertising_payload: dict[Any, Any] | None = None
         self.subscribed_characteristic_uuids: list[str] = []
         self.unsubscribed_characteristic_uuids: list[str] = []
+        self.mutable_characteristics_by_uuid: dict[str, Any] = {}
+        self.notification_results: list[bool] = []
         self._start()
 
     @property
@@ -102,12 +104,14 @@ class CoreBluetoothPeripheralManagerAdapter:
 
     def build_mutable_characteristic(self, characteristic: BleCharacteristic) -> Any:
         corebluetooth = importlib.import_module("CoreBluetooth")
-        return corebluetooth.CBMutableCharacteristic.alloc().initWithType_properties_value_permissions_(
+        cb_characteristic = corebluetooth.CBMutableCharacteristic.alloc().initWithType_properties_value_permissions_(
             self._build_uuid(characteristic.uuid),
             self._map_characteristic_properties(characteristic.properties),
             characteristic.value,
             self._map_characteristic_permissions(characteristic.properties),
         )
+        self.mutable_characteristics_by_uuid[characteristic.uuid.lower()] = cb_characteristic
+        return cb_characteristic
 
     def add_service(self, service: BleService) -> Any:
         if self._manager is None:
@@ -135,6 +139,24 @@ class CoreBluetoothPeripheralManagerAdapter:
             self._manager.stopAdvertising()
         self.advertising_started = False
         self.last_advertising_payload = None
+
+    def notify(self, characteristic_uuid: str, payload: bytes) -> bool:
+        if self._manager is None:
+            return False
+
+        characteristic = self.mutable_characteristics_by_uuid.get(characteristic_uuid.lower())
+        if characteristic is None:
+            return False
+
+        result = bool(
+            self._manager.updateValue_forCharacteristic_onSubscribedCentrals_(
+                bytes(payload),
+                characteristic,
+                None,
+            )
+        )
+        self.notification_results.append(result)
+        return result
 
     @staticmethod
     def _build_uuid(uuid: str) -> Any:
@@ -250,7 +272,12 @@ class CoreBluetoothBackend(BleBackend):
         self.advertisement = None
 
     def notify(self, characteristic_uuid: str, payload: bytes) -> None:
-        self.notifications.append((characteristic_uuid, bytes(payload)))
+        packet = bytes(payload)
+        self.notifications.append((characteristic_uuid, packet))
+
+        notify = getattr(self.peripheral_manager, "notify", None)
+        if callable(notify):
+            notify(characteristic_uuid, packet)
 
     @staticmethod
     def check_availability() -> CoreBluetoothAvailability:
