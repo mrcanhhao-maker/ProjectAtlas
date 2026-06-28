@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from engine.ble_backend import BleAdvertisement, BleCharacteristic, BleService
-from engine.corebluetooth_backend import CoreBluetoothAvailability, CoreBluetoothBackend
+from engine.corebluetooth_backend import CoreBluetoothAvailability, CoreBluetoothBackend, CoreBluetoothPeripheralManagerAdapter
 
 
 class FakePeripheralManager:
@@ -126,3 +126,28 @@ def test_corebluetooth_backend_peripheral_manager_adapter_can_pump_run_loop(monk
 
     assert any(event[0] == "date" for event in events)
     assert any(event[0] == "run" for event in events)
+
+
+def test_corebluetooth_peripheral_manager_adapter_maps_manager_state_name():
+    class Manager:
+        def __init__(self, state):
+            self._state = state
+
+        def state(self):
+            return self._state
+
+    assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(Manager(0)) == "unknown"
+    assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(Manager(5)) == "powered_on"
+    assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(Manager(99)) == "unknown_99"
+
+
+def test_corebluetooth_peripheral_manager_adapter_handles_unreadable_manager_state():
+    class MissingState:
+        pass
+
+    class BrokenState:
+        def state(self):
+            raise RuntimeError("boom")
+
+    assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(MissingState()) == "unknown"
+    assert CoreBluetoothPeripheralManagerAdapter.read_manager_state_name(BrokenState()) == "unknown"

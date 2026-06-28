@@ -30,6 +30,15 @@ class CoreBluetoothAvailability:
 
 
 class CoreBluetoothPeripheralManagerAdapter:
+    STATE_NAMES = {
+        0: "unknown",
+        1: "resetting",
+        2: "unsupported",
+        3: "unauthorized",
+        4: "powered_off",
+        5: "powered_on",
+    }
+
     def __init__(self) -> None:
         self._manager: Any | None = None
         self._delegate: Any | None = None
@@ -42,7 +51,22 @@ class CoreBluetoothPeripheralManagerAdapter:
 
     @property
     def state_name(self) -> str:
+        if self._manager is not None:
+            self._state_name = self.read_manager_state_name(self._manager)
         return self._state_name
+
+    @classmethod
+    def read_manager_state_name(cls, manager: Any) -> str:
+        state_selector = getattr(manager, "state", None)
+        if not callable(state_selector):
+            return "unknown"
+
+        try:
+            raw_state = int(state_selector())
+        except Exception:
+            return "unknown"
+
+        return cls.STATE_NAMES.get(raw_state, f"unknown_{raw_state}")
 
 
     def pump_run_loop(self, duration_seconds: float = 0.25) -> None:
@@ -69,7 +93,7 @@ class CoreBluetoothPeripheralManagerAdapter:
 
         class PeripheralDelegate(NSObject):  # type: ignore[misc, valid-type]
             def peripheralManagerDidUpdateState_(self, peripheral_manager: Any) -> None:
-                adapter._state_name = str(getattr(peripheral_manager, "state", lambda: "unknown")())
+                adapter._state_name = adapter.read_manager_state_name(peripheral_manager)
 
         self._delegate = PeripheralDelegate.alloc().init()
         self._manager = CBPeripheralManager.alloc().initWithDelegate_queue_options_(
