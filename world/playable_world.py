@@ -45,7 +45,7 @@ class PlayableWorld:
             checkpoints=tuple(self.checkpoints),
             current_zones=tuple(self.current_zones),
             hud_lines=(
-                "ProjectAtlas Alpha 16.2",
+                "ProjectAtlas Alpha 16.5",
                 f"Boat y {self.boat.y:.2f} m",
                 f"Velocity {self.boat.velocity_mps:.2f} m/s",
             ),

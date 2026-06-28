@@ -1,3 +1,10 @@
+from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from atlas_platform.core_runtime import CoreRuntime
 from atlas_platform.dev_playable_loop import DevPlayableLoop
 from atlas_platform.opencv_display_runtime import OpenCVDisplayRuntime
