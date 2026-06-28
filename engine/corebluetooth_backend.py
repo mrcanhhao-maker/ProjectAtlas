@@ -49,6 +49,7 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.advertising_errors: list[str] = []
         self.last_advertising_payload: dict[Any, Any] | None = None
         self.pending_advertisement: BleAdvertisement | None = None
+        self.service_add_in_progress = False
         self.auto_start_advertising_after_service_added = True
         self.subscribed_characteristic_uuids: list[str] = []
         self.unsubscribed_characteristic_uuids: list[str] = []
@@ -119,6 +120,7 @@ class CoreBluetoothPeripheralManagerAdapter:
         if self._manager is None:
             raise RuntimeError("CBPeripheralManager is not initialized")
         cb_service = self.build_mutable_service(service)
+        self.service_add_in_progress = True
         self._manager.addService_(cb_service)
         return cb_service
 
@@ -128,6 +130,7 @@ class CoreBluetoothPeripheralManagerAdapter:
 
         if (
             self.auto_start_advertising_after_service_added
+            and self.service_add_in_progress
             and self.added_service_count <= 0
             and not self.service_errors
         ):
@@ -156,6 +159,7 @@ class CoreBluetoothPeripheralManagerAdapter:
             return
         if self.added_service_count <= 0 or self.service_errors:
             return
+        self.service_add_in_progress = False
         self._start_advertising_now(self.pending_advertisement)
 
     def stop_advertising(self) -> None:
@@ -230,6 +234,7 @@ class CoreBluetoothPeripheralManagerAdapter:
                     adapter.added_service_count += 1
                     adapter._start_pending_advertising_if_ready()
                     return
+                adapter.service_add_in_progress = False
                 adapter.service_errors.append(str(error))
 
             def peripheralManagerDidStartAdvertising_error_(self, peripheral_manager: Any, error: Any) -> None:
