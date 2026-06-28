@@ -406,3 +406,49 @@ def test_corebluetooth_adapter_advertises_immediately_when_no_service_is_pending
     assert adapter.pending_advertisement is None
     assert adapter.last_advertising_payload == {"local_name": "PA512", "service_uuids": []}
     assert adapter._manager.payload == adapter.last_advertising_payload
+
+
+def test_corebluetooth_adapter_stores_readable_characteristic_values(monkeypatch):
+    import engine.corebluetooth_backend as module
+
+    class FakeUUID:
+        @staticmethod
+        def UUIDWithString_(uuid):
+            return f"CBUUID:{uuid}"
+
+    class FakeMutableCharacteristic:
+        @classmethod
+        def alloc(cls):
+            return cls()
+
+        def initWithType_properties_value_permissions_(self, uuid, properties, value, permissions):
+            self.uuid = uuid
+            return self
+
+    class FakeCoreBluetooth:
+        CBUUID = FakeUUID
+        CBMutableCharacteristic = FakeMutableCharacteristic
+        CBCharacteristicPropertyRead = 2
+        CBCharacteristicPropertyNotify = 16
+        CBCharacteristicPropertyWrite = 8
+        CBCharacteristicPropertyWriteWithoutResponse = 4
+        CBAttributePermissionsReadable = 1
+        CBAttributePermissionsWriteable = 2
+
+    monkeypatch.setattr(module.importlib, "import_module", lambda name: FakeCoreBluetooth)
+
+    adapter = object.__new__(module.CoreBluetoothPeripheralManagerAdapter)
+    adapter.mutable_characteristics_by_uuid = {}
+    adapter.characteristic_values_by_uuid = {}
+
+    characteristic = BleCharacteristic(
+        uuid="00002acc-0000-1000-8000-00805f9b34fb",
+        properties=("read",),
+        value=bytes.fromhex("0000000000000000"),
+    )
+
+    adapter.build_mutable_characteristic(characteristic)
+
+    assert adapter.characteristic_values_by_uuid[
+        "00002acc-0000-1000-8000-00805f9b34fb"
+    ] == bytes.fromhex("0000000000000000")

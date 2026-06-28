@@ -54,6 +54,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.subscribed_characteristic_uuids: list[str] = []
         self.unsubscribed_characteristic_uuids: list[str] = []
         self.mutable_characteristics_by_uuid: dict[str, Any] = {}
+        self.characteristic_values_by_uuid: dict[str, bytes] = {}
+        self.read_request_uuids: list[str] = []
         self.notification_results: list[bool] = []
         self._start()
 
@@ -113,7 +115,10 @@ class CoreBluetoothPeripheralManagerAdapter:
             characteristic.value,
             self._map_characteristic_permissions(characteristic.properties),
         )
-        self.mutable_characteristics_by_uuid[characteristic.uuid.lower()] = cb_characteristic
+        uuid_key = characteristic.uuid.lower()
+        self.mutable_characteristics_by_uuid[uuid_key] = cb_characteristic
+        if characteristic.value is not None:
+            self.characteristic_values_by_uuid[uuid_key] = bytes(characteristic.value)
         return cb_characteristic
 
     def add_service(self, service: BleService) -> Any:
@@ -242,6 +247,34 @@ class CoreBluetoothPeripheralManagerAdapter:
                     adapter.advertising_started = True
                     return
                 adapter.advertising_errors.append(str(error))
+
+            def peripheralManager_didReceiveReadRequest_(self, peripheral_manager: Any, request: Any) -> None:
+                corebluetooth = importlib.import_module("CoreBluetooth")
+                uuid = str(request.characteristic().UUID()).lower()
+                adapter.read_request_uuids.append(uuid)
+
+                value = adapter.characteristic_values_by_uuid.get(uuid)
+                if value is None:
+                    peripheral_manager.respondToRequest_withResult_(
+                        request,
+                        int(corebluetooth.CBATTErrorAttributeNotFound),
+                    )
+                    return
+
+                offset = int(request.offset())
+                if offset > len(value):
+                    peripheral_manager.respondToRequest_withResult_(
+                        request,
+                        int(corebluetooth.CBATTErrorInvalidOffset),
+                    )
+                    return
+
+                foundation = importlib.import_module("Foundation")
+                request.setValue_(foundation.NSData.dataWithBytes_length_(value[offset:], len(value) - offset))
+                peripheral_manager.respondToRequest_withResult_(
+                    request,
+                    int(corebluetooth.CBATTErrorSuccess),
+                )
 
             def peripheralManager_central_didSubscribeToCharacteristic_(self, peripheral_manager: Any, central: Any, characteristic: Any) -> None:
                 adapter.subscribed_characteristic_uuids.append(str(characteristic.UUID()).lower())
