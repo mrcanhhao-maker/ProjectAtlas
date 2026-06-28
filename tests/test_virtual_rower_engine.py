@@ -94,8 +94,29 @@ def test_virtual_rower_engine_reset() -> None:
     assert reset_state.is_moving is False
 
 
+def test_virtual_rower_engine_camera_drive_speed_power() -> None:
+    rower = VirtualRowerEngine()
+
+    state = rower.update(
+        {
+            "stroke_count": 1,
+            "spm": 3,
+            "quality_score": 0.45,
+            "drive_speed": 0.28,
+            "phase": "CATCH",
+        },
+        timestamp=4000.0,
+    )
+
+    assert state["is_moving"] is True
+    assert state["power_watts"] > 0
+    assert state["speed_mps"] > 0
+    assert state["pace_500m"] > 0
+
+
 if __name__ == "__main__":
     test_virtual_rower_engine_active_motion()
     test_virtual_rower_engine_idle_timeout()
     test_virtual_rower_engine_reset()
+    test_virtual_rower_engine_camera_drive_speed_power()
     print("Alpha12.2 VirtualRowerEngine tests PASS")
