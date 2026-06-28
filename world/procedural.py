@@ -8,6 +8,7 @@ class ProceduralRiverChunkSpec:
     center_x: float
     width: float
     flow_speed: float
+    lateral_flow: float
 
 
 class ProceduralRiverGenerator:
@@ -25,11 +26,13 @@ class ProceduralRiverGenerator:
         center_x = rng.uniform(-90.0, 90.0)
         width = rng.uniform(280.0, 460.0)
         flow_speed = rng.uniform(0.6, 1.4)
+        lateral_flow = rng.uniform(-0.25, 0.25)
 
         return ProceduralRiverChunkSpec(
             center_x=round(center_x, 3),
             width=round(width, 3),
             flow_speed=round(flow_speed, 3),
+            lateral_flow=round(lateral_flow, 3),
         )
 
     def _stable_int(self, chunk_index: int) -> int:

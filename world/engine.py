@@ -2,13 +2,15 @@ from dataclasses import dataclass
 
 from world.camera import TopDownRiverCamera
 from world.culling import ViewportCuller
+from world.environment import RiverEnvironment
 from world.hud import RiverHud
 from world.mission import RiverMission
 from world.physics import BoatState, RowingPhysics, StrokeInput
 from world.objects import WorldObject
 from world.renderer import RenderFrame, RiverRenderer
+from world.procedural import ProceduralRiverGenerator
 from world.river_map import RiverMap
-from world.streaming import RiverStream
+from world.streaming import RiverChunkGenerator, RiverStream
 from world.viewport import ViewportFactory
 
 
@@ -22,6 +24,8 @@ class RiverWorldEngine:
     def __init__(self, river_map: RiverMap) -> None:
         self.river_map = river_map
         self.physics = RowingPhysics()
+        self.procedural = ProceduralRiverGenerator(seed="atlas-alpha15")
+        self.environment = RiverEnvironment(self.procedural)
         self.camera = TopDownRiverCamera()
         self.mission = RiverMission(river_map)
         self.hud = RiverHud()
@@ -29,11 +33,14 @@ class RiverWorldEngine:
         self.viewport_factory = ViewportFactory()
         self.culler = ViewportCuller()
         self.static_world_objects = self._build_world_objects(river_map)
-        self.river_stream = RiverStream()
+        self.river_stream = RiverStream(
+            generator=RiverChunkGenerator(procedural=self.procedural)
+        )
         self.boat = BoatState(lane_x=0.0, distance=0.0, speed=0.0)
 
     def step(self, stroke: StrokeInput, dt: float) -> WorldEngineSnapshot:
-        self.boat = self.physics.step(self.boat, stroke, dt)
+        environment_force = self.environment.force_at_distance(self.boat.distance)
+        self.boat = self.physics.step(self.boat, stroke, dt, environment_force)
         camera_state = self.camera.follow(self.boat)
         mission_state = self.mission.evaluate(self.boat)
         hud_snapshot = self.hud.build(self.boat, mission_state)
