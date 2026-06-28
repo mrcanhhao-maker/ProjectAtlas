@@ -15,6 +15,8 @@ class RenderConfig:
     pixels_per_meter: float = 18.0
     boat_screen_y_ratio: float = 0.78
     show_debug_current_zones: bool = True
+    river_left_ratio: float = 0.22
+    river_right_ratio: float = 0.78
 
     def __post_init__(self):
         if self.width <= 0 or self.height <= 0:
@@ -23,6 +25,8 @@ class RenderConfig:
             raise ValueError("Boat screen ratio must stay between 0.75 and 0.80")
         if self.pixels_per_meter <= 0:
             raise ValueError("pixels_per_meter must be positive")
+        if not 0.0 < self.river_left_ratio < self.river_right_ratio < 1.0:
+            raise ValueError("river bank ratios must satisfy 0 < left < right < 1")
 
 
 class BoatLike(Protocol):
@@ -43,7 +47,7 @@ class OpenCVWorldRenderer:
 
     def render(self, scene: SceneGraph, boat: BoatLike) -> np.ndarray:
         frame = np.zeros((self.config.height, self.config.width, 3), dtype=np.uint8)
-        frame[:] = (42, 92, 126)
+        frame[:] = (126, 92, 42)
 
         self._draw_river_banks(frame)
         for node in scene.nodes:
@@ -56,7 +60,7 @@ class OpenCVWorldRenderer:
 
     def render_queue(self, queue: RenderQueue, boat: BoatLike) -> np.ndarray:
         frame = np.zeros((self.config.height, self.config.width, 3), dtype=np.uint8)
-        frame[:] = (42, 92, 126)
+        frame[:] = (126, 92, 42)
 
         self._draw_river_banks(frame)
         for command in queue.commands:
@@ -99,8 +103,8 @@ class OpenCVWorldRenderer:
 
     def _draw_river_banks(self, frame: np.ndarray) -> None:
         h, w = self.config.height, self.config.width
-        river_left = int(w * 0.22)
-        river_right = int(w * 0.78)
+        river_left = int(w * self.config.river_left_ratio)
+        river_right = int(w * self.config.river_right_ratio)
         cv2.rectangle(frame, (0, 0), (river_left, h), (44, 92, 48), -1)
         cv2.rectangle(frame, (river_right, 0), (w, h), (44, 92, 48), -1)
         cv2.line(frame, (river_left, 0), (river_left, h), (82, 130, 74), 4)
