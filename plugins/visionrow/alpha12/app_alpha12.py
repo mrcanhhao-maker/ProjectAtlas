@@ -17,6 +17,7 @@ from engine.quality_engine import QualityEngine
 from engine.motion_metrics import MotionMetrics
 from engine.stroke_validator import StrokeValidator
 from engine.virtual_rower import VirtualRowerEngine
+from engine.session_recorder import SessionRecorder
 
 def draw_text(frame, text, x, y):
     import cv2
@@ -46,8 +47,11 @@ def main():
     motion_metrics = MotionMetrics()
     validator = StrokeValidator()
     virtual_rower = VirtualRowerEngine()
+    session_recorder = SessionRecorder(output_dir="sessions", prefix="alpha12_virtual_rower")
+    session_path = session_recorder.start()
+    print(f"Recording session: {session_path}")
 
-    print("ProjectAtlas Alpha 12.4 Virtual Rower Engine started")
+    print("ProjectAtlas Alpha 12.9 Virtual Rower Engine + Session Recorder started")
     print("Press Q to quit")
 
     prev_time = time.time()
@@ -77,6 +81,7 @@ def main():
         quality = quality_engine.update(data)
         data['quality_score'] = float(quality.get('quality', 0)) / 100.0
         rower_data = virtual_rower.update(data)
+        session_recorder.record_state(rower_data, data)
         validation = validator.validate(data)
 
         frame = pose_engine.draw(frame, result)
@@ -129,6 +134,7 @@ def main():
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
+    session_recorder.stop()
     cap.release()
     cv2.destroyAllWindows()
 
