@@ -302,3 +302,11 @@ def test_corebluetooth_peripheral_manager_adapter_keeps_advertising_payload(monk
     assert adapter._manager.stopped is True
     assert adapter.advertising_started is False
     assert adapter.last_advertising_payload is None
+
+def test_corebluetooth_peripheral_manager_adapter_exposes_subscription_state():
+    adapter = object.__new__(CoreBluetoothPeripheralManagerAdapter)
+    adapter.subscribed_characteristic_uuids = []
+    adapter.unsubscribed_characteristic_uuids = []
+
+    assert adapter.subscribed_characteristic_uuids == []
+    assert adapter.unsubscribed_characteristic_uuids == []

@@ -48,6 +48,8 @@ class CoreBluetoothPeripheralManagerAdapter:
         self.advertising_started = False
         self.advertising_errors: list[str] = []
         self.last_advertising_payload: dict[Any, Any] | None = None
+        self.subscribed_characteristic_uuids: list[str] = []
+        self.unsubscribed_characteristic_uuids: list[str] = []
         self._start()
 
     @property
@@ -187,6 +189,12 @@ class CoreBluetoothPeripheralManagerAdapter:
                     adapter.advertising_started = True
                     return
                 adapter.advertising_errors.append(str(error))
+
+            def peripheralManager_central_didSubscribeToCharacteristic_(self, peripheral_manager: Any, central: Any, characteristic: Any) -> None:
+                adapter.subscribed_characteristic_uuids.append(str(characteristic.UUID()).lower())
+
+            def peripheralManager_central_didUnsubscribeFromCharacteristic_(self, peripheral_manager: Any, central: Any, characteristic: Any) -> None:
+                adapter.unsubscribed_characteristic_uuids.append(str(characteristic.UUID()).lower())
 
         self._delegate = PeripheralDelegate.alloc().init()
         self._manager = CBPeripheralManager.alloc().initWithDelegate_queue_options_(
